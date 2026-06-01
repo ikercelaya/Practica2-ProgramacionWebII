@@ -29,19 +29,33 @@ def create_producto(
     """Crea un producto (sólo admin). Recibe ``multipart/form-data`` con imagen opcional."""
     # Validación estricta de los campos del formulario mediante el esquema Pydantic.
     data = ProductoCreate(nombre=nombre, precio=precio)
-    filename = save_upload_file(imagen) if imagen is not None else None
+    filename = save_upload_file(imagen) if (imagen is not None and imagen.filename) else None
     return ProductoService(db).create(data, filename)
 
 
 @router.put("/{producto_id}", response_model=ProductoOut)
 def update_producto(
     producto_id: int,
-    payload: ProductoUpdate,
+    nombre: str | None = Form(default=None),
+    precio: float | None = Form(default=None),
+    imagen: UploadFile | None = File(default=None),
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Actualiza un producto existente (sólo admin)."""
-    return ProductoService(db).update(producto_id, payload)
+    """Actualiza un producto existente (sólo admin).
+
+    Recibe ``multipart/form-data``: ``nombre`` y ``precio`` son opcionales (sólo se
+    actualiza lo que se envía) y, si se adjunta ``imagen``, se reemplaza la imagen actual.
+    """
+    # Se construye sólo con los campos realmente enviados (actualización parcial).
+    provided: dict = {}
+    if nombre is not None:
+        provided["nombre"] = nombre
+    if precio is not None:
+        provided["precio"] = precio
+    data = ProductoUpdate(**provided)
+    new_filename = save_upload_file(imagen) if (imagen is not None and imagen.filename) else None
+    return ProductoService(db).update(producto_id, data, imagen=new_filename)
 
 
 @router.delete("/{producto_id}")

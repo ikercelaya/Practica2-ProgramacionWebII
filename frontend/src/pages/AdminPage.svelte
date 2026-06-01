@@ -51,7 +51,7 @@
   async function handleUpdateProduct(payload) {
     productBusy = true;
     try {
-      await api.updateProduct(selectedProduct._id, payload.values);
+      await api.updateProduct(selectedProduct._id, payload.formData);
       toasts.push('Producto actualizado correctamente', 'success');
       selectedProduct = null;
       await reloadProducts();

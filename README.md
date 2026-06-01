@@ -2,8 +2,10 @@
 
 Reescritura del backend de la [Práctica 1](https://github.com/ikercelaya/Practica1PWII)
 (originalmente **Node.js + Express + MongoDB + Redis**) por un backend nuevo desarrollado
-**íntegramente en Python con FastAPI**, manteniendo **exactamente el mismo contrato de API**
-para que el frontend **Svelte 5** siga funcionando **sin ninguna modificación**.
+**íntegramente en Python con FastAPI**, manteniendo el **mismo contrato de API** (mismas URLs,
+métodos y formato JSON) para que el frontend **Svelte 5** siga funcionando con su misma lógica de
+consumo de API. Como **mejora añadida** sobre la Práctica 1 se incorpora la **edición de la imagen
+del producto** (ver §6).
 
 El foco de la entrega es la **separación de responsabilidades en capas**, la **autenticación
 JWT**, la **validación estricta**, el **manejo global de errores**, la **persistencia real con
@@ -20,7 +22,7 @@ ORM** y el **uso documentado y crítico de la IA** (ver [`MEMORIA_IA.md`](MEMORI
 | Validación / serialización | **Pydantic v2** |
 | ORM / persistencia | **SQLAlchemy 2.0** sobre **SQLite** |
 | Autenticación | **JWT** (PyJWT) + **bcrypt** |
-| Frontend (sin cambios) | Svelte 5 + Vite |
+| Frontend | Svelte 5 + Vite (reutilizado de la Práctica 1) |
 
 > Se eligió **FastAPI** frente a Flask porque sus dependencias nativas (Pydantic para
 > validación con `422`, inyección de dependencias para proteger rutas, manejadores de
@@ -143,7 +145,7 @@ Base: `http://localhost:3000/api` · Imágenes: `http://localhost:3000/uploads/<
 | POST | `/api/register` | No | — | Alta de usuario (siempre rol `user`) |
 | GET | `/api/productos` | No | — | Listado (acepta `?name=` para filtrar) |
 | POST | `/api/productos` | Sí | **admin** | Crear producto (`multipart/form-data` con imagen) |
-| PUT | `/api/productos/{id}` | Sí | **admin** | Editar producto |
+| PUT | `/api/productos/{id}` | Sí | **admin** | Editar producto (`multipart/form-data`; imagen opcional para reemplazarla) |
 | DELETE | `/api/productos/{id}` | Sí | **admin** | Borrar producto |
 | GET | `/api/users` | Sí | **admin** | Listar usuarios (sin contraseña) |
 | POST | `/api/users` | Sí | **admin** | Crear usuario |
@@ -166,7 +168,8 @@ Base: `http://localhost:3000/api` · Imágenes: `http://localhost:3000/uploads/<
 
 ## 5. Compatibilidad del contrato con el frontend
 
-El frontend Svelte 5 **no se ha tocado**. El backend reproduce el contrato exacto:
+El backend reproduce el contrato que ya esperaba el frontend Svelte 5 de la Práctica 1, que
+conserva su lógica de consumo de API:
 
 - El login devuelve `{ token }` y el JWT lleva el payload `{ id, username, role }`, que el
   frontend decodifica para conocer el rol.
@@ -189,6 +192,10 @@ El frontend Svelte 5 **no se ha tocado**. El backend reproduce el contrato exact
 - **Persistencia real + patrón repositorio:** SQLite mediante SQLAlchemy. Todo el acceso a
   datos está encapsulado en `repositories/`; ni servicios ni routers ejecutan SQL. **No se usa
   ninguna persistencia simulada** (ni listas en memoria, ni JSON, ni archivos de texto).
+- **Edición de la imagen del producto (mejora sobre la P1):** el formulario de edición permite
+  subir una imagen nueva. `PUT /api/productos/{id}` acepta `multipart/form-data` y reemplaza la
+  imagen **sólo si se adjunta** una; si no, conserva la actual (actualización parcial). Implicó un
+  cambio mínimo en el frontend (`ProductForm.svelte`, `AdminPage.svelte`, `lib/api.js`).
 
 ---
 
@@ -198,7 +205,7 @@ El frontend Svelte 5 **no se ha tocado**. El backend reproduce el contrato exact
 |----------|-----------------|
 | Estructura y separación en capas | `routers/` → `services/` → `repositories/` → `models/`; `main.py` sin lógica |
 | Autenticación JWT compatible | `core/security.py`, `dependencies/auth.py`, `routers/auth_router.py` |
-| Migración del contrato (mismas URLs/JSON) | Sección 5 y pruebas de humo (30/30) |
+| Migración del contrato (mismas URLs y métodos) | Sección 5 y pruebas de humo (30/30) |
 | IA: registro de prompts | [`MEMORIA_IA.md`](MEMORIA_IA.md) §2 |
 | IA: análisis crítico de errores | [`MEMORIA_IA.md`](MEMORIA_IA.md) §3 |
 | Validaciones y errores (Pydantic + 422 + handler global) | `schemas/`, `core/error_handlers.py` |
@@ -212,7 +219,9 @@ El frontend Svelte 5 **no se ha tocado**. El backend reproduce el contrato exact
 - **Pruebas de contrato end-to-end:** batería de 30 comprobaciones (auth, productos,
   usuarios, carrito, validaciones 422, roles 401/403, filtro por nombre, `_id` anidado) →
   **30/30 correctas**.
-- **Frontend:** compila con `npm run build` y consume el backend sin cambios.
+- **Edición de imagen:** batería específica de **11/11** comprobaciones (subir y reemplazar
+  imagen, conservar la actual si no se envía, actualización parcial, validación 422 y rol admin).
+- **Frontend:** compila con `npm run build` (también verificado en navegador real cross-origin).
 
 ---
 

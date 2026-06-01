@@ -46,7 +46,8 @@ export const api = {
     return request('/productos', { method: 'POST', body: payload });
   },
   updateProduct(id, payload) {
-    return request(`/productos/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    // payload es un FormData (permite enviar también una imagen nueva opcional).
+    return request(`/productos/${id}`, { method: 'PUT', body: payload });
   },
   deleteProduct(id) {
     return request(`/productos/${id}`, { method: 'DELETE' });

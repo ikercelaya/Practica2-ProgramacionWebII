@@ -1,7 +1,11 @@
 <script>
+  import { UPLOADS_URL } from '../config.js';
+
   let { product = null, mode = 'create', busy = false, onSubmit } = $props();
 
   let selectedFile = null;
+
+  const currentImageUrl = $derived(product?.imagen ? `${UPLOADS_URL}/${product.imagen}` : null);
 
   function submit(event) {
     event.preventDefault();
@@ -31,20 +35,29 @@
     <input id="precio" name="precio" type="number" step="0.01" min="0" required value={product?.precio || ''} />
   </div>
 
-  {#if mode === 'create'}
-    <div class="full">
-      <label for="imagen">Imagen</label>
-      <input
-        id="imagen"
-        name="imagen"
-        type="file"
-        accept="image/*"
-        onchange={(event) => {
-          selectedFile = event.currentTarget.files?.[0] || null;
-        }}
-      />
-    </div>
-  {/if}
+  <div class="full">
+    <label for="imagen">
+      Imagen{mode === 'edit' ? ' (opcional: elige una nueva para reemplazar la actual)' : ''}
+    </label>
+
+    {#if mode === 'edit'}
+      {#if currentImageUrl}
+        <img class="form-image-preview" src={currentImageUrl} alt={product?.nombre} />
+      {:else}
+        <p class="muted">Este producto no tiene imagen todavía.</p>
+      {/if}
+    {/if}
+
+    <input
+      id="imagen"
+      name="imagen"
+      type="file"
+      accept="image/*"
+      onchange={(event) => {
+        selectedFile = event.currentTarget.files?.[0] || null;
+      }}
+    />
+  </div>
 
   <div class="full">
     <button class="primary" type="submit" disabled={busy}>
@@ -52,3 +65,14 @@
     </button>
   </div>
 </form>
+
+<style>
+  .form-image-preview {
+    max-width: 140px;
+    max-height: 140px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+</style>
