@@ -1,0 +1,21 @@
+# ===== Backend (Python) =====
+backend/.venv/
+**/__pycache__/
+*.py[cod]
+backend/.env
+*.db
+*.sqlite3
+# Imágenes subidas en tiempo de ejecución (se conserva la carpeta vía .gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ===== Frontend (Node) =====
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# ===== Varios =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
